@@ -4,12 +4,20 @@ import torch.nn as nn
 import pickle
 
 
+# -------------------------
+# Page setup
+# -------------------------
+st.set_page_config(page_title="Next Word Predictor", page_icon="🤖")
 st.title("Next Word Prediction")
+st.write("Type a sentence and let the model guess the next word.")
 
 
 device = "cpu"
 
 
+# -------------------------
+# Model definition (same as training)
+# -------------------------
 class LanguageModel(nn.Module):
     def __init__(self, vocab_size, embed_dim, hidden_dim):
         super().__init__()
@@ -25,15 +33,19 @@ class LanguageModel(nn.Module):
         return out
 
 
+# -------------------------
+# Load model once (cached)
+# -------------------------
 @st.cache_resource
 def load_model():
-    with open("../model/word2idx.pkl", "rb") as f:
+    # IMPORTANT: paths relative to project root (NOT ../)
+    with open("model/word2idx.pkl", "rb") as f:
         word2idx = pickle.load(f)
 
     idx2word = {i: w for w, i in word2idx.items()}
 
     model = LanguageModel(len(word2idx), 64, 128)
-    model.load_state_dict(torch.load("../model/language_model.pth", map_location=device))
+    model.load_state_dict(torch.load("model/language_model.pth", map_location=device))
     model.eval()
 
     return model, word2idx, idx2word
@@ -42,8 +54,12 @@ def load_model():
 model, word2idx, idx2word = load_model()
 
 
+# -------------------------
+# Prediction function
+# -------------------------
 def predict_next(text_input, max_len=10):
     words = text_input.lower().split()
+
     encoded = [word2idx.get(w, 0) for w in words]
 
     if len(encoded) > max_len:
@@ -60,8 +76,14 @@ def predict_next(text_input, max_len=10):
     return idx2word.get(pred, "<UNK>")
 
 
+# -------------------------
+# UI
+# -------------------------
 text = st.text_input("Enter text")
 
 if st.button("Predict"):
-    if text:
-        st.success(f"Next word: {predict_next(text)}")
+    if text.strip():
+        result = predict_next(text)
+        st.success(f"Predicted next word: **{result}**")
+    else:
+        st.warning("Please enter some text")
