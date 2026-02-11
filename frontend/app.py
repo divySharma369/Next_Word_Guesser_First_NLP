@@ -1,13 +1,8 @@
-import subprocess
-import time
-import os
+
 import streamlit as st
 import requests
 
-if "SERVER_STARTED" not in st.session_state:
-    subprocess.Popen(["uvicorn", "backend.main:app"])
-    time.sleep(2)
-    st.session_state.SERVER_STARTED = True
+
 
 
 
